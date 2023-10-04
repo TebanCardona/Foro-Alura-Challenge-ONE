@@ -1,91 +1,34 @@
 package com.alura.foro.dominio.curso;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Entity(name = "curso")
 @Table(name = "cursos")
+@Entity(name = "Curso")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(of = "id")
 public class Curso {
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
   private String nombre;
   private String categoria;
 
-  public Curso(DTORegistrarCurso registro) {
-    this.nombre = registro.nombre();
-    this.categoria = registro.categoria();
+  public Curso(CursoPostDTO cursoRegistrarDTO) {
+    this.nombre = cursoRegistrarDTO.nombre();
+    this.categoria = cursoRegistrarDTO.categoria();
   }
 
-  public Curso(@NotNull @Valid Curso curso) {
-    this(curso.getId(), curso.getNombre(), curso.getCategoria());
-  }
-
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((id == null) ? 0 : id.hashCode());
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    Curso other = (Curso) obj;
-    if (id == null) {
-      if (other.id != null)
-        return false;
-    } else if (!id.equals(other.id))
-      return false;
-    return true;
-  }
-
-  public void actualizarDatos(@Valid DTOActualizarCurso datosActualizar) {
-    if (datosActualizar.nombre() != null) {
-      this.nombre = datosActualizar.nombre();
+  public void actualizarDatos(CursoPutDTO cursoActualizarDTO) {
+    if (cursoActualizarDTO.categoria() != null) {
+      this.categoria = cursoActualizarDTO.categoria();
     }
-    if (datosActualizar.categoria() != null) {
-      this.categoria = datosActualizar.categoria();
+    if (cursoActualizarDTO.nombre() != null) {
+      this.nombre = cursoActualizarDTO.nombre();
     }
-  }
 
-  public Long getId() {
-    return id;
   }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getNombre() {
-    return nombre;
-  }
-
-  public void setNombre(String nombre) {
-    this.nombre = nombre;
-  }
-
-  public String getCategoria() {
-    return categoria;
-  }
-
-  public void setCategoria(String categoria) {
-    this.categoria = categoria;
-  }
-
 }

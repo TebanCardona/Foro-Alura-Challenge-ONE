@@ -1,14 +1,15 @@
 package com.alura.foro.controller;
 
-import com.alura.foro.dominio.usuario.DTOActualizarUsuario;
-import com.alura.foro.dominio.usuario.DTOListarUsuarios;
-import com.alura.foro.dominio.usuario.DTORegistrarUsuario;
-import com.alura.foro.dominio.usuario.Usuario;
-import com.alura.foro.repository.UsuarioRepository;
+import com.alura.foro.dominio.usuario.UsuarioPutDTO;
+import com.alura.foro.dominio.usuario.UsuarioPostDTO;
+import com.alura.foro.dominio.usuario.UsuarioResDTO;
+import com.alura.foro.services.UsuarioService;
+import com.alura.foro.utils.res.ResDTO;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -16,47 +17,46 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
-@RestController
+@Controller
+@ResponseBody
 @RequestMapping("/usuarios")
+@SecurityRequirement(name = "bearer-key")
 public class UsuarioController {
+  private UsuarioService usuarioService;
 
-  @Autowired
-  private UsuarioRepository usuarioRepository;
+  public UsuarioController(UsuarioService usuarioService) {
+    this.usuarioService = usuarioService;
+  }
 
   @GetMapping
-  public List<DTOListarUsuarios> listarUsuarios() {
-    return usuarioRepository.findAll().stream().map(DTOListarUsuarios::new).toList();
+  public ResponseEntity<List<UsuarioResDTO>> listarUsuarios() {
+    return ResponseEntity.ok(usuarioService.getAll());
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<UsuarioResDTO> idUsuario(@PathVariable long id) {
+    return ResponseEntity.ok(usuarioService.getById(id));
   }
 
   @PostMapping
-  public ResponseEntity<DTOListarUsuarios> regitrarCurso(@RequestBody @Valid DTORegistrarUsuario registro,
+  @Transactional
+  public ResponseEntity<UsuarioResDTO> regitrarUsuario(@RequestBody @Valid UsuarioPostDTO registro,
       UriComponentsBuilder uri) {
-    Usuario usuario = usuarioRepository.save(new Usuario(registro));
-    DTOListarUsuarios respuestaUsuarios = new DTOListarUsuarios(
-        usuario.getId(),
-        usuario.getNombre(),
-        usuario.getEmail());
-    URI url = uri.path("/usuarios/{id}").buildAndExpand(usuario.getId()).toUri();
-    return ResponseEntity.created(url).body(respuestaUsuarios);
+    UsuarioResDTO usuario = usuarioService.registrar(registro);
+    URI url = uri.path("/usuarios/{id}").buildAndExpand(usuario.id()).toUri();
+    return ResponseEntity.created(url).body(usuario);
   }
 
-  @PutMapping
+  @PutMapping("/{id}")
   @Transactional
-  public ResponseEntity<DTOActualizarUsuario> actualizarTopico(
-      @RequestBody @Valid DTOActualizarUsuario datosActualizar) {
-    Usuario usuario = usuarioRepository.getReferenceById(datosActualizar.id());
-    usuario.actualizarDatos(datosActualizar);
-    return ResponseEntity.ok(new DTOActualizarUsuario(
-        usuario.getId(),
-        usuario.getNombre(),
-        usuario.getEmail()));
+  public ResponseEntity<UsuarioResDTO> actualizarUsuario(@PathVariable long id,
+      @RequestBody @Valid UsuarioPutDTO datosActualizar) {
+    return ResponseEntity.ok(usuarioService.editar(id, datosActualizar));
   }
 
   @DeleteMapping("/{id}")
   @Transactional
-  public ResponseEntity eliminarTopico(@PathVariable Long id) {
-    Usuario usuario = usuarioRepository.getReferenceById(id);
-    usuarioRepository.delete(usuario);
-    return ResponseEntity.noContent().build();
+  public ResponseEntity<ResDTO> eliminarUsuario(@PathVariable Long id) {
+    return ResponseEntity.ok(usuarioService.eliminar(id));
   }
 }

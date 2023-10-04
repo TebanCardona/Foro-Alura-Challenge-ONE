@@ -1,112 +1,59 @@
 package com.alura.foro.controller;
 
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.net.URI;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.alura.foro.dominio.curso.Curso;
-import com.alura.foro.dominio.topico.DTOActualizarTopico;
-import com.alura.foro.dominio.topico.DTOListarTopicos;
-import com.alura.foro.dominio.topico.DTORegistrarTopico;
-import com.alura.foro.dominio.topico.DTORespuestaTopico;
-import com.alura.foro.dominio.topico.Topico;
-import com.alura.foro.dominio.usuario.Usuario;
-import com.alura.foro.repository.TopicoRepository;
+import com.alura.foro.dominio.topico.TopicoPostDTO;
+import com.alura.foro.dominio.topico.TopicoPutDTO;
+import com.alura.foro.dominio.topico.TopicoResDTO;
+import com.alura.foro.services.TopicosService;
+import com.alura.foro.utils.res.ResDTO;
 
-import java.net.URI;
-import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/topicos")
 public class TopicosController {
+  private TopicosService topicosService;
 
-  @Autowired
-  private TopicoRepository topicoRepository;
-
-  @PostMapping
-  public ResponseEntity<DTORespuestaTopico> registrarTopico(@RequestBody @Valid DTORegistrarTopico registro,
-      UriComponentsBuilder uri) {
-    System.out.println("El request llega correctamente!");
-    System.out.println(registro);
-    Topico topico = topicoRepository.save(new Topico(registro));
-    DTORespuestaTopico datosDeRespuestaTopico = new DTORespuestaTopico(
-        topico.getId(),
-        topico.getTitulo(),
-        topico.getMensaje(),
-        topico.getfechaCreacion(),
-        topico.getStatus(),
-        new Usuario(
-            topico.getUsuario().getId(),
-            topico.getUsuario().getNombre(),
-            topico.getUsuario().getEmail(),
-            topico.getUsuario().getPassword()),
-        new Curso(
-            topico.getCurso().getId(),
-            topico.getCurso().getNombre(),
-            topico.getCurso().getCategoria()));
-    URI url = uri.path("/topicos/{id}").buildAndExpand(topico.getId()).toUri();
-    return ResponseEntity.created(url).body(datosDeRespuestaTopico);
+  public TopicosController(TopicosService topicosService) {
+    this.topicosService = topicosService;
   }
 
   @GetMapping
-  public ResponseEntity<Page<DTOListarTopicos>> listadoMedicos(Pageable paginacion) {
-    return ResponseEntity.ok(topicoRepository.findByActivoTrue(paginacion).map(DTOListarTopicos::new));
+  public ResponseEntity<List<TopicoResDTO>> listarTopicos() {
+    return ResponseEntity.ok(topicosService.getAll());
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<DTORespuestaTopico> listarTopicosPorId(@PathVariable Long id) {
-    Topico topico = topicoRepository.getReferenceById(id);
-    var datosTopico = new DTORespuestaTopico(
-        topico.getId(),
-        topico.getTitulo(),
-        topico.getMensaje(),
-        topico.getfechaCreacion(),
-        topico.getStatus(),
-        new Usuario(
-            topico.getUsuario().getId(),
-            topico.getUsuario().getNombre(),
-            topico.getUsuario().getEmail(),
-            topico.getUsuario().getPassword()),
-        new Curso(
-            topico.getCurso().getId(),
-            topico.getCurso().getNombre(),
-            topico.getCurso().getCategoria()));
-    return ResponseEntity.ok(datosTopico);
+  public ResponseEntity<TopicoResDTO> idTopico(@PathVariable long id) {
+    return ResponseEntity.ok(topicosService.getById(id));
   }
 
-  @PutMapping
+  @PostMapping
   @Transactional
-  public ResponseEntity<DTORespuestaTopico> actualizarTopico(@RequestBody @Valid DTOActualizarTopico datosActualizar) {
-    Topico topico = topicoRepository.getReferenceById(datosActualizar.id());
-    topico.actualizarDatos(datosActualizar);
-    return ResponseEntity.ok(new DTORespuestaTopico(
-        topico.getId(),
-        topico.getTitulo(),
-        topico.getMensaje(),
-        topico.getfechaCreacion(),
-        topico.getStatus(),
-        new Usuario(
-            topico.getUsuario().getId(),
-            topico.getUsuario().getNombre(),
-            topico.getUsuario().getEmail(),
-            topico.getUsuario().getpassword()),
-        new Curso(
-            topico.getCurso().getId(),
-            topico.getCurso().getNombre(),
-            topico.getCurso().getCategoria())));
+  public ResponseEntity<TopicoResDTO> regitrarTopicos(@RequestBody @Valid TopicoPostDTO registro,
+      UriComponentsBuilder uri) {
+    TopicoResDTO topico = topicosService.registrar(registro);
+    URI url = uri.path("/topicos/{id}").buildAndExpand(topico.id()).toUri();
+    return ResponseEntity.created(url).body(topico);
   }
 
-  // **** DELETE ****
+  @PutMapping("/{id}")
+  @Transactional
+  public ResponseEntity<TopicoResDTO> actualizarTopicos(@PathVariable long id,
+      @RequestBody @Valid TopicoPutDTO datosActualizar) {
+    return ResponseEntity.ok(topicosService.editar(id, datosActualizar));
+  }
+
   @DeleteMapping("/{id}")
   @Transactional
-  public ResponseEntity eliminarTopico(@PathVariable Long id) {
-    Topico topico = topicoRepository.getReferenceById(id);
-    topicoRepository.delete(topico);
-    return ResponseEntity.noContent().build();
+  public ResponseEntity<ResDTO> eliminarTopicos(@PathVariable Long id) {
+    return ResponseEntity.ok(topicosService.eliminar(id));
   }
 }
