@@ -29,6 +29,7 @@ public class UsuarioController {
   }
 
   @GetMapping
+  @SecurityRequirement(name = "bearer-key")
   public ResponseEntity<List<UsuarioResDTO>> listarUsuarios() {
     return ResponseEntity.ok(usuarioService.getAll());
   }

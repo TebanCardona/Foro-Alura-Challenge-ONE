@@ -3,6 +3,8 @@ package com.alura.foro.services;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.alura.foro.dominio.topico.Topico;
 import com.alura.foro.dominio.topico.TopicoPostDTO;
 import com.alura.foro.dominio.topico.TopicoPutDTO;
@@ -11,6 +13,7 @@ import com.alura.foro.repository.TopicoRepository;
 import com.alura.foro.utils.errors.ValidacionRechazada;
 import com.alura.foro.utils.res.ResDTO;
 
+@Service
 public class TopicosService {
   private TopicoRepository topicoRepository;
 
